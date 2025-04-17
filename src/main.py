@@ -49,7 +49,7 @@ def generate_page(from_path: str, template_path: str, dest_path: str, basepath: 
 
     basepath = basepath.rstrip('/')
     if basepath and basepath != '/':
-        final_html = page_html.replace('href="/',f'href="{basepath}').replace('src="/',f'src="{basepath}')
+        final_html = page_html.replace('href="/',f'href="{basepath}/').replace('src="/',f'src="{basepath}/')
     else:
         final_html = page_html
 
