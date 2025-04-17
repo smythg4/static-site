@@ -53,9 +53,6 @@ def generate_page(from_path: str, template_path: str, dest_path: str, basepath: 
     else:
         final_html = page_html
 
-    # Remove this line once you're done troubleshooting
-    final_html = page_html
-
     if os.path.isfile(dest_path):
         print(f"{dest_path} file already exists.")
     else:
