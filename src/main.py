@@ -10,30 +10,27 @@ import sys
 def clean_and_copy(sourcepath: Path, destpath: Path):
     assert sourcepath.exists(), f"Source path {sourcepath} does not exist"
 
-    if destpath.exists() and destpath == 'public':
-        shutil.rmtree(destpath)
-        print(f"Deleting and recreating directory and contents of: {destpath}")
-        destpath.mkdir()
-
-    elif not destpath.exists() and not sourcepath.is_file():
-        destpath.mkdir()
-        #os.mkdir(destpath)
+    # see if the destination path exists, if not, make it along with parent dirs
+    if not destpath.exists():
+        destpath.mkdir(parents=True)
         
     if sourcepath.is_file():
-        print(f"Found file at path: {sourcepath}")
-        print(f"Copying it to: {destpath}")
+        print(f"Copying file: {sourcepath} -> {destpath}")
         shutil.copy(sourcepath, destpath)
     else:
+        print(f"Copying directory contents: {sourcepath} -> {destpath}")
         child_paths = sourcepath.iterdir()
         for path in child_paths:
             new_source_path = sourcepath / path.name
             new_dest_path = destpath / path.name
-            print(f"Child Path: {path}")
-            print(f"New Source Path: {new_source_path}")
-            print(f"New Dest Path: {new_dest_path}")
-            if not new_source_path.is_file():
-                new_dest_path.mkdir()
-            clean_and_copy(new_source_path, new_dest_path)
+            if new_source_path.is_dir():
+                # for directories, ensure directory exists
+                if not new_dest_path.exists():
+                    new_dest_path.mkdir()
+                clean_and_copy(new_source_path, new_dest_path)
+            else:
+                # for files, copy them directly
+                shutil.copy(new_source_path, new_dest_path)
 
 def extract_title(markdown: str):
     assert get_heading_block_tag(markdown) == "h1", "title must be of type <h1>"
@@ -49,6 +46,9 @@ def generate_page(from_path: str, template_path: str, dest_path: str, basepath: 
     page_title = extract_title(source_text)
     
     page_html = template_text.replace('{{ Title }}', page_title).replace('{{ Content }}',source_html)
+    
+    if basepath.endswith('/'):
+        basepath = basepath[:-1]
     final_html = page_html.replace('href="/',f'href="{basepath}/').replace('src="/',f'src="{basepath}/')
     if os.path.isfile(dest_path):
         print(f"{dest_path} file already exists.")
@@ -80,15 +80,25 @@ def generate_page_recursive(dir_path_content, template_path, dest_dir_path, base
 
 def get_sys_args(default='/'):
     if len(sys.argv) > 1:
-        return Path(sys.argv[1])
+        return sys.argv[1]
     else:
-        return Path(default)
+        return default
 
 def main():
     base_path = get_sys_args()
-    print(f"Base Path: {base_path.name}")
-    clean_and_copy(base_path/'static',base_path/'public')
-    #generate_page('content/index.md', 'template.html', 'public/index.html')
-    generate_page_recursive('content/', 'template.html', 'public/', base_path)
+    print(f"Base Path: {base_path}")
+    output_dir = Path('docs')
+
+    # make sure output directory exists
+    if output_dir.exists():
+        shutil.rmtree(output_dir)
+    output_dir.mkdir()
+
+    # copy static files
+    static_dir = Path('static')
+    if static_dir.exists():
+        clean_and_copy(static_dir, output_dir/'static')
+
+    generate_page_recursive('content', 'template.html', output_dir, base_path)
 
 main()
