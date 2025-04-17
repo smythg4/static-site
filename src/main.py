@@ -46,13 +46,16 @@ def generate_page(from_path: str, template_path: str, dest_path: str, basepath: 
     page_title = extract_title(source_text)
     
     page_html = template_text.replace('{{ Title }}', page_title).replace('{{ Content }}',source_html)
-    
+
     basepath = basepath.rstrip('/')
     if basepath and basepath != '/':
-        final_html = page_html.replace('href="/',f'href="{basepath}/').replace('src="/',f'src="{basepath}/')
+        final_html = page_html.replace('href="/',f'href="{basepath}').replace('src="/',f'src="{basepath}')
     else:
         final_html = page_html
-        
+
+    # Remove this line once you're done troubleshooting
+    final_html = page_html
+
     if os.path.isfile(dest_path):
         print(f"{dest_path} file already exists.")
     else:
@@ -100,7 +103,7 @@ def main():
     # copy static files
     static_dir = Path('static')
     if static_dir.exists():
-        clean_and_copy(static_dir, output_dir/'static')
+        clean_and_copy(static_dir, output_dir)
 
     generate_page_recursive('content', 'template.html', output_dir, base_path)
 
